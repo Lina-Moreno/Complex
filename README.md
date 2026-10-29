@@ -2,8 +2,6 @@
 
 Prototipo académico desarrollado en el contexto de **Complex UD** para explorar el cifrado y descifrado de imágenes usando **Python**, transformaciones con **matrices de Pauli**, secuencias del **mapa logístico** y **autómatas celulares**.
 
-> **Aviso:** proyecto experimental y educativo. No es una implementación criptográfica auditada ni debe utilizarse para proteger información sensible. Aunque utiliza operadores matemáticos de Pauli, **no ejecuta computación cuántica en hardware**.
-
 ## Objetivo
 
 Estudiar un flujo reversible de transformación de imágenes RGB y analizar el comportamiento de las claves, los parámetros y las imágenes resultantes.
@@ -90,5 +88,3 @@ Abre los notebooks de `RevisionEncrypt/` para explorar el flujo de cifrado, desc
 ## Pruebas y resultados
 
 El repositorio contiene notebooks para pruebas y análisis de imágenes. Para documentar resultados reproducibles, registra el archivo de entrada, sus dimensiones, los parámetros usados, el resultado cifrado, la reconstrucción y las métricas correspondientes.
-
-> Las métricas exploratorias no demuestran por sí solas seguridad criptográfica frente a ataques reales.
