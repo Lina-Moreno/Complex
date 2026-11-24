@@ -61,6 +61,33 @@ def filas_a_matriz_pixeles(filas, n_bits, w):
     return matriz
 
 
+def canales_a_filas_binarias(r_int, g_int, b_int, n_bits):
+    """Intercala R, G y B por pixel, como en Encriptacion/encrypt.ipynb."""
+    h, w = r_int.shape
+    filas = []
+    for i in range(h):
+        bits = ''.join(
+            format(int(canal[i, j]), f'0{n_bits}b')
+            for j in range(w) for canal in (r_int, g_int, b_int)
+        )
+        bits += '0' * (-len(bits) % 8)
+        filas.append(np.fromiter((int(bit) for bit in bits), dtype=np.uint8))
+    return filas
+
+
+def filas_a_matrices_rgb(filas, n_bits, w):
+    """Separa los bits intercalados en las tres matrices enteras cifradas."""
+    h = len(filas)
+    canales = [np.zeros((h, w), dtype=np.int64) for _ in range(3)]
+    for i, fila in enumerate(filas):
+        for j in range(w):
+            inicio = j * 3 * n_bits
+            for k in range(3):
+                bits = fila[inicio + k * n_bits:inicio + (k + 1) * n_bits]
+                canales[k][i, j] = int(''.join(str(bit) for bit in bits), 2)
+    return tuple(canales)
+
+
 def normalizar(arr):
     """Normaliza a uint8 [0,255] solo para poder visualizar un canal
     cifrado (sus valores no estan en rango de pixel)."""

@@ -1,11 +1,7 @@
 """
-Orquesta el pipeline COMPLETO de cifrado (difusion Pauli + permutacion con
-automata celular) y su inverso, para no repetir esta secuencia de pasos en
-cada notebook que necesite cifrar o descifrar una imagen entera.
-
-encrypt.ipynb, decrypt.ipynb, analisis_seguridad_clave.ipynb y el notebook
-de analisis diferencial (NPCR/UACI) deberian llamar a estas dos funciones
-en vez de reimplementar los pasos.
+Orquesta el cifrado de Encriptacion/encrypt.ipynb (difusion Pauli y automata
+celular sobre R, G y B intercalados) y su inverso para los notebooks de
+analisis.
 """
 from dataclasses import dataclass
 
@@ -20,7 +16,7 @@ from difusion_pauli import (
 from permutacion_automata import (
     generar_indices_reglas, cifrar_filas_automata, descifrar_canal_ca,
 )
-from io_imagen import canal_a_filas_binarias, filas_a_matriz_pixeles
+from io_imagen import canales_a_filas_binarias, filas_a_matrices_rgb
 
 
 @dataclass
@@ -29,15 +25,10 @@ class ImagenCifrada:
     falta para descifrar despues (y es, campo a campo, lo que encrypt.ipynb
     escribe en el TIFF + cifrado_meta.txt).
 
-    filas_*_cif quedan en formato de BITS con padding a multiplo de 8 (el
-    mismo formato que se guarda en las paginas 1-3 del TIFF) — no en forma
-    de matriz entera. Si se necesita la matriz entera (por ejemplo para
-    comparar cifrados con NPCR/UACI), se obtiene con
-    io_imagen.filas_a_matriz_pixeles(cifrado.filas_R_cif, cifrado.num_bits, cifrado.w).
+    filas_RGB_cif contiene los bits R, G y B intercalados por pixel, con
+    padding a multiplo de 8, igual que la pagina 1 del TIFF.
     """
-    filas_R_cif: list
-    filas_G_cif: list
-    filas_B_cif: list
+    filas_RGB_cif: list
     num_bits: int
     key: list
     x0: float
@@ -77,18 +68,16 @@ def cifrar_imagen_completa(r_img, g_img, b_img, verbose=False):
     max_val = int(np.max([r_real.max(), g_real.max(), b_real.max()]))
     num_bits = max_val.bit_length()
 
-    filas_R = canal_a_filas_binarias(r_real.astype(int), num_bits)
-    filas_G = canal_a_filas_binarias(g_real.astype(int), num_bits)
-    filas_B = canal_a_filas_binarias(b_real.astype(int), num_bits)
+    filas_RGB = canales_a_filas_binarias(
+        r_real.astype(int), g_real.astype(int), b_real.astype(int), num_bits
+    )
 
     reglas = generar_indices_reglas(x0, h, iteraciones_ignorar=iteraciones_usadas)
 
-    filas_R_cif = cifrar_filas_automata(filas_R, reglas)
-    filas_G_cif = cifrar_filas_automata(filas_G, reglas)
-    filas_B_cif = cifrar_filas_automata(filas_B, reglas)
+    filas_RGB_cif = cifrar_filas_automata(filas_RGB, reglas)
 
     return ImagenCifrada(
-        filas_R_cif=filas_R_cif, filas_G_cif=filas_G_cif, filas_B_cif=filas_B_cif,
+        filas_RGB_cif=filas_RGB_cif,
         num_bits=num_bits, key=key, x0=x0, iteraciones_usadas=iteraciones_usadas,
         r_imag=r_imag, r_signos=r_signos, g_imag=g_imag, g_signos=g_signos,
         b_imag=b_imag, b_signos=b_signos, h=h, w=w,
@@ -111,13 +100,8 @@ def descifrar_imagen_completa(cifrado: ImagenCifrada, key=None, x0=None, iteraci
 
     reglas = generar_indices_reglas(x0, cifrado.h, iteraciones_ignorar=iteraciones_usadas)
 
-    filas_R = descifrar_canal_ca(cifrado.filas_R_cif, reglas)
-    filas_G = descifrar_canal_ca(cifrado.filas_G_cif, reglas)
-    filas_B = descifrar_canal_ca(cifrado.filas_B_cif, reglas)
-
-    R_int = filas_a_matriz_pixeles(filas_R, cifrado.num_bits, cifrado.w)
-    G_int = filas_a_matriz_pixeles(filas_G, cifrado.num_bits, cifrado.w)
-    B_int = filas_a_matriz_pixeles(filas_B, cifrado.num_bits, cifrado.w)
+    filas_RGB = descifrar_canal_ca(cifrado.filas_RGB_cif, reglas)
+    R_int, G_int, B_int = filas_a_matrices_rgb(filas_RGB, cifrado.num_bits, cifrado.w)
 
     c_r_2d = reconstruir_complejo(R_int, cifrado.r_imag, cifrado.r_signos)
     c_g_2d = reconstruir_complejo(G_int, cifrado.g_imag, cifrado.g_signos)

@@ -1,0 +1,9 @@
+# Entorno virtual local
+.venv/
+
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+
+# Copias temporales de Jupyter
+.ipynb_checkpoints/
